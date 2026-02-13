@@ -1,35 +1,54 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../../api/axios";
+import axios from "axios";
+
+interface RegisterFormData {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  username: string;
+}
 
 export default function Register() {
-  const navigate = useNavigate();
-  const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [formData, setFormData] = useState<RegisterFormData>({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    username: "",
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const navigate = useNavigate();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.currentTarget;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      const res = await axios.post("/auth/register", {
-        fullName,
-        username,
-        email,
-        phone,
-        password,
-      });
+      const res = await axios.post("/api/auth/register", formData);
 
-      // Redirect to login page
+      // localStorage.setItem("token", res.data.token);
+
       navigate("/login");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed. Try again.");
+      console.log(err);
+      setError(
+        err.response?.data?.message || "Registration failed. Try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -43,46 +62,57 @@ export default function Register() {
         </h2>
 
         {error && (
-          <div className="text-red-600 mb-4 text-center font-medium">{error}</div>
+          <div className="text-red-600 mb-4 text-center font-medium">
+            {error}
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <input
             type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
             placeholder="Full Name"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             required
           />
+
           <input
             type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
             placeholder="Username"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             required
           />
+
           <input
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
             placeholder="Email"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             required
           />
+
           <input
             type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            name="phone"
+            value={formData.phone}
+            onChange={handleChange}
             placeholder="Phone Number"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             required
           />
+
           <input
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
             placeholder="Password"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
             required
@@ -95,17 +125,17 @@ export default function Register() {
           >
             {loading ? "Registering..." : "Register"}
           </button>
-          <div className="text-center mt-4 text-gray-600">
-  Already have an account?{" "}
-  <button
-    type="button"
-    onClick={() => navigate("/login")}
-    className="text-indigo-600 font-semibold hover:underline"
-  >
-    Login
-  </button>
-</div>
 
+          <div className="text-center mt-4 text-gray-600">
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="text-indigo-600 font-semibold hover:underline"
+            >
+              Login
+            </button>
+          </div>
         </form>
       </div>
     </div>

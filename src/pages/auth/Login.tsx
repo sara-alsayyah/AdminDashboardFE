@@ -1,23 +1,36 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "../../api/axios";
+import axios from "axios";
 
 export default function Login() {
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+  });
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.currentTarget;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); // ✅ fixed
     setLoading(true);
     setError("");
-
     try {
-      const res = await axios.post("/auth/login", { username, password });
-      localStorage.setItem("token", res.data.token);
-      navigate("/dashboard");
+      const res = await axios.post("/api/auth/login", formData); // ✅ fixed proxy
+      console.log("logged in successfull");
+      localStorage.setItem("token", res.data.accessToken);
+
+      // Navigate after successful login
+      navigate("/");
     } catch (err: any) {
       setError(err.response?.data?.message || "Login failed. Try again");
     } finally {
@@ -29,21 +42,26 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-500 to-indigo-600 font-sans">
       <div className="bg-white shadow-2xl border border-gray-200 rounded-3xl p-10 w-full max-w-md">
         <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-         Login
+          Login
         </h2>
 
         {error && (
-          <div className="text-red-600 mb-4 text-center font-medium">{error}</div>
+          <div className="text-red-600 mb-4 text-center font-medium">
+            {error}
+          </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Username */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Username</label>
+            <label className="block text-gray-700 font-medium mb-2">
+              Username
+            </label>
             <input
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
               placeholder="Enter username"
               required
@@ -52,11 +70,14 @@ export default function Login() {
 
           {/* Password */}
           <div>
-            <label className="block text-gray-700 font-medium mb-2">Password</label>
+            <label className="block text-gray-700 font-medium mb-2">
+              Password
+            </label>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"
               placeholder="Enter password"
               required
@@ -71,16 +92,17 @@ export default function Login() {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
+
           <div className="text-center mt-4 text-gray-600">
-  Don't have an account?{" "}
-  <button
-    type="button"
-    onClick={() => navigate("/register")}
-    className="text-indigo-600 font-semibold hover:underline"
-  >
-    Register
-  </button>
-</div>
+            Don't have an account?{" "}
+            <button
+              type="button"
+              onClick={() => navigate("/register")}
+              className="text-indigo-600 font-semibold hover:underline"
+            >
+              Register
+            </button>
+          </div>
         </form>
       </div>
     </div>
