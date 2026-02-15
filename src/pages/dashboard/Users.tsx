@@ -1,4 +1,5 @@
-import { useState } from "react";
+import axios from "axios";
+import { useEffect, useState } from "react";
 
 type User = {
   id: number;
@@ -8,24 +9,51 @@ type User = {
   createdAt: string;
 };
 
-const mockUsers: User[] = [
-  { id: 1, name: "Sara", email: "sara@test.com", role: "Admin", createdAt: "Feb 10, 2026" },
-  { id: 2, name: "Sana", email: "sana@test.com", role: "Employee", createdAt: "Feb 11, 2026" },
-  { id: 3, name: "Ahmed", email: "ahmed@test.com", role: "Employee", createdAt: "Feb 12, 2026" },
-];
-
 const Users = () => {
-  const [filterRole, setFilterRole] = useState("All");
+  const [allUsers, setAllUsers] = useState<User[]>([]);   // original fetched users
+  const [users, setUsers] = useState<User[]>([]);         // displayed users
+  const [filterRole, setFilterRole] = useState<string>("All");
 
-  const filteredUsers =
-    filterRole === "All"
-      ? mockUsers
-      : mockUsers.filter((user) => user.role === filterRole);
+  // Fetch users once
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get("/api/users");
+        setAllUsers(response.data);
+        setUsers(response.data); // initially show all
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  // Filter logic
+const handleFilter = (role: string) => {
+  setFilterRole(role);
+
+  if (role === "All") {
+    setUsers(allUsers);
+  } else {
+    const filtered = allUsers.filter(
+      (user) => user.role.toLowerCase() === role.toLowerCase()
+    );
+    setUsers(filtered);
+  }
+};
 
   const handleEdit = (id: number) => alert(`Edit user #${id}`);
+
   const handleDelete = (id: number) => {
     if (confirm(`Are you sure you want to delete user #${id}?`)) {
-      alert(`User #${id} deleted (mock)`); // In FE-only mode
+      const updated = allUsers.filter((user) => user.id !== id);
+      setAllUsers(updated);
+      setUsers(
+        filterRole === "All"
+          ? updated
+          : updated.filter((user) => user.role === filterRole)
+      );
     }
   };
 
@@ -33,11 +61,13 @@ const Users = () => {
     <div className="p-4 md:p-8 font-sans space-y-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <h2 className="text-3xl font-semibold text-gray-900">Users</h2>
+
         <div className="flex gap-2 flex-wrap">
-          {["All", "Admin", "Employee"].map((role) => (
+          {["All", "Client", "Employee"].map((role) => (
             <button
               key={role}
-              onClick={() => setFilterRole(role)}
+              
+              onClick={() => handleFilter(role)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                 filterRole === role
                   ? "bg-gray-900 text-white shadow-md"
@@ -62,8 +92,9 @@ const Users = () => {
               <th className="px-6 py-4 text-left">Actions</th>
             </tr>
           </thead>
+
           <tbody>
-            {filteredUsers.map((user) => (
+            {users.map((user) => (
               <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition">
                 <td className="px-6 py-4 font-medium text-gray-900">#{user.id}</td>
                 <td className="px-6 py-4 text-gray-800">{user.name}</td>
@@ -71,7 +102,9 @@ const Users = () => {
                 <td className="px-6 py-4">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      user.role === "Admin" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
+                      user.role === "Client"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-700"
                     }`}
                   >
                     {user.role}
@@ -97,7 +130,7 @@ const Users = () => {
           </tbody>
         </table>
 
-        {filteredUsers.length === 0 && (
+        {users.length === 0 && (
           <div className="p-8 text-center text-gray-500 text-sm">
             No users found.
           </div>

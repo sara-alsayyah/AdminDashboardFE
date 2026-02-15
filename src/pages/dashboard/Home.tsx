@@ -1,4 +1,8 @@
 import { FaUsers, FaTicketAlt, FaCheckCircle } from "react-icons/fa";
+import React from "react";
+import { useNavigate} from "react-router-dom";
+import axios from "axios";
+
 
 const Home = () => {
   const stats = [
